@@ -14,7 +14,7 @@ albedo_color = Color(1, 0.15686275, 1, 1)
 [node name="Node3D" type="Node3D" unique_id=929869374]
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=937476976]
-transform = Transform3D(1, 0, 0, 0, 0.9690435, 0.24689001, 0, -0.24689001, 0.9690435, 0, 1.5973608, 3.3387783)
+transform = Transform3D(1, 0, 0, 0, 0.9690435, 0.24689001, 0, -0.24689001, 0.9690435, 0, 1.5973608, 3.7640293)
 current = true
 fov = 62.500168
 size = 2.99
