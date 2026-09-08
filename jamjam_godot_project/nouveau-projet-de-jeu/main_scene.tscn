@@ -1,5 +1,9 @@
 [gd_scene format=3 uid="uid://h6xo0ity208q"]
 
+[ext_resource type="Script" uid="uid://op13pqc7e7xr" path="res://p_1.gd" id="1_0f027"]
+[ext_resource type="Script" uid="uid://lmtheqghinio" path="res://p_2.gd" id="2_gyfs4"]
+[ext_resource type="Script" uid="uid://doj13ka3wtnq4" path="res://turn.gd" id="2_turn"]
+
 [sub_resource type="BoxMesh" id="BoxMesh_14and"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uj0um"]
@@ -7,16 +11,19 @@
 [sub_resource type="BoxMesh" id="BoxMesh_uj0um"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_14and"]
-albedo_color = Color(1, 0.15686275, 1, 1)
+albedo_color = Color(6.545782e-06, 0.69915295, 0.88087183, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_14and"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7jxi0"]
+albedo_color = Color(7.941574e-06, 0.75521064, 0.04102324, 1)
 
 [node name="Node3D" type="Node3D" unique_id=929869374]
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=937476976]
-transform = Transform3D(1, 0, 0, 0, 0.9690435, 0.24689001, 0, -0.24689001, 0.9690435, 0, 1.5973608, 3.7640293)
+transform = Transform3D(1, 0, 0, 0, 0.9998558, 0.016982391, 0, -0.016982391, 0.9998558, 0, 1.7345198, 5.4509287)
 current = true
-fov = 62.500168
+fov = 37.094563
 size = 2.99
 
 [node name="plane" type="MeshInstance3D" parent="." unique_id=1282009820]
@@ -29,14 +36,26 @@ mesh = SubResource("BoxMesh_14and")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 0, 0, 0)
 shape = SubResource("BoxShape3D_uj0um")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=369839782]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6392977, 0)
+[node name="P1" type="MeshInstance3D" parent="." unique_id=369839782]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3593531, 0.6392977, 1.306834)
 mesh = SubResource("BoxMesh_uj0um")
 surface_material_override/0 = SubResource("StandardMaterial3D_14and")
+script = ExtResource("1_0f027")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D" unique_id=654527161]
+[node name="StaticBody3D" type="StaticBody3D" parent="P1" unique_id=654527161]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D/StaticBody3D" unique_id=1870304383]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="P1/StaticBody3D" unique_id=1870304383]
+shape = SubResource("BoxShape3D_14and")
+
+[node name="P2" type="MeshInstance3D" parent="." unique_id=1008269717]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6215904, 0.6392977, 1.306834)
+mesh = SubResource("BoxMesh_uj0um")
+surface_material_override/0 = SubResource("StandardMaterial3D_7jxi0")
+script = ExtResource("2_gyfs4")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="P2" unique_id=1093758040]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="P2/StaticBody3D" unique_id=1032953825]
 shape = SubResource("BoxShape3D_14and")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=741576923]
@@ -44,3 +63,116 @@ shape = SubResource("BoxShape3D_14and")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment" unique_id=1996916273]
 transform = Transform3D(0.87867177, 0.35946983, -0.31419322, 0, 0.65809774, 0.7529325, 0.47742638, -0.6615805, 0.5782519, -4.76976, 1.5456545, 1.4126562)
 shadow_enabled = true
+
+[node name="CombatHUD" type="CanvasLayer" parent="." unique_id=2001000001]
+
+[node name="Root" type="Control" parent="CombatHUD" unique_id=2001000002]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_turn")
+
+[node name="Lane0" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000006]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 90.384
+offset_right = 1092.0
+offset_bottom = 114.384
+mouse_filter = 2
+color = Color(1, 1, 1, 0.08)
+
+[node name="Lane1" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000007]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 222.576
+offset_right = 1092.0
+offset_bottom = 246.576
+mouse_filter = 2
+color = Color(1, 1, 1, 0.08)
+
+[node name="Lane2" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000008]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 354.768
+offset_right = 1092.0
+offset_bottom = 378.768
+mouse_filter = 2
+color = Color(1, 1, 1, 0.08)
+
+[node name="PlayerHitbox" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000009]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 78.384
+offset_right = 62.0
+offset_bottom = 390.768
+mouse_filter = 2
+color = Color(0.3, 0.6, 1, 1)
+
+[node name="EnemyHitbox" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000010]
+layout_mode = 0
+offset_left = 1090.0
+offset_top = 78.384
+offset_right = 1096.0
+offset_bottom = 390.768
+mouse_filter = 2
+color = Color(1, 0.4, 0.4, 1)
+
+[node name="LaneSelector" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000011]
+layout_mode = 0
+offset_left = 44.0
+offset_top = 220.576
+offset_right = 54.0
+offset_bottom = 248.576
+mouse_filter = 2
+color = Color(1, 1, 0.3, 1)
+
+[node name="ActionsLayer" type="Control" parent="CombatHUD/Root" unique_id=2001000012]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PlayerHPBar" type="ProgressBar" parent="CombatHUD/Root" unique_id=2001000003]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 220.0
+offset_bottom = 44.0
+
+[node name="EnemyHPBar" type="ProgressBar" parent="CombatHUD/Root" unique_id=2001000004]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 44.0
+fill_mode = 1
+
+[node name="ResultLabel" type="Label" parent="CombatHUD/Root" unique_id=2001000005]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -20.0
+offset_right = 100.0
+offset_bottom = 20.0
+horizontal_alignment = 1
+
+[node name="P1_ATK_Regen" type="ProgressBar" parent="CombatHUD/Root" unique_id=1595534037]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 411.0
+offset_right = 243.144
+offset_bottom = 438.0
+show_percentage = false
