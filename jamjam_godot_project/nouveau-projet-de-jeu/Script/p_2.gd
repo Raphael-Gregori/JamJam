@@ -6,12 +6,18 @@ extends MeshInstance3D
 @export var _CURRENT_HP = 15
 @export var _START_HP = 15
 
-### Force that will be used to damage
+### Force
+##Force that will be used to damage
 @export var _FORCE = 1
 
 ### Agility of the player.
 @export var _AGILITY = 1
 @export var _REGEN_DODGE = 0.5
+
+### Dodge charge: regenerates at _REGEN_DODGE units/sec, dodge fires (and
+### consumes the charge) once it reaches _DODGE_MAX.
+@export var _DODGE_MAX = 1.0
+@export var _CURRENT_DODGE = 0.0
 
 ### Speed of the player.
 @export var _SPEED = 350
@@ -31,6 +37,7 @@ func _ready() -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	_CURRENT_ATK = min(_CURRENT_ATK + _REGEN_ATK * delta, _ATK_MAX)
+	_CURRENT_DODGE = min(_CURRENT_DODGE + _REGEN_DODGE * delta, _DODGE_MAX)
 
 func _take_damage(damage: float):
 	if damage > 0:
@@ -45,3 +52,11 @@ func _is_atk_ready() -> bool:
 
 func _consume_atk() -> void:
 	_CURRENT_ATK = 0.0
+
+
+func _is_dodge_ready() -> bool:
+	return _CURRENT_DODGE >= _DODGE_MAX
+
+
+func _consume_dodge() -> void:
+	_CURRENT_DODGE = 0.0

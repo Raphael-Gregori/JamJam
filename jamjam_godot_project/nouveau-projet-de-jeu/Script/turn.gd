@@ -29,6 +29,8 @@ const ACTION_TYPES := {
 @export var lane_height := 24.0
 @export var lane_area_top_ratio := 0.158 ## # lane rows occupy this vertical band of the viewport...
 @export var lane_area_bottom_ratio := 0.566 ## # ...from top_ratio to bottom_ratio (0 = top, 1 = bottom)
+### how close (in px) an enemy action must be to the player's hitbox for a dodge to nullify it
+@export var dodge_range := 40.0
 
 ### The 3D unit stat blocks this combat overlay reports damage to - repoint
 ### these in the Inspector if P1/P2 ever move elsewhere in the tree. Resolved
@@ -51,6 +53,8 @@ var enemy_unit: MeshInstance3D
 @onready var enemy_hp_bar: ProgressBar = $EnemyHPBar
 @onready var player_atk_bar: ProgressBar = $P1_ATK_Regen
 @onready var enemy_atk_bar: ProgressBar = $P2_ATK_Regen
+@onready var player_dodge_bar: ProgressBar = $P1_DODGE_Regen
+@onready var enemy_dodge_bar: ProgressBar = $P2_DODGE_Regen
 @onready var result_label: Label = $ResultLabel
 
 # Y position of each lane, computed once in _ready() from the viewport size.
@@ -87,6 +91,10 @@ func _ready() -> void:
 	enemy_atk_bar.max_value = enemy_unit._ATK_MAX
 	player_atk_bar.value = player_unit._CURRENT_ATK
 	enemy_atk_bar.value = enemy_unit._CURRENT_ATK
+	player_dodge_bar.max_value = player_unit._DODGE_MAX
+	enemy_dodge_bar.max_value = enemy_unit._DODGE_MAX
+	player_dodge_bar.value = player_unit._CURRENT_DODGE
+	enemy_dodge_bar.value = enemy_unit._CURRENT_DODGE
 	result_label.visible = false
 
 # Lay out the 3 lanes and the two edge thresholds from the current viewport size,
@@ -118,10 +126,12 @@ func _init_layout() -> void:
 	_update_lane_highlight()
 
 
-# combat_action_fast spawns a Fast Strike, combat_parry spawns a Defense, both
-# on whichever lane is currently selected (see _update_selected_lane) and
-# both gated by the same ATK charge (see p_1.gd/p_2.gd) - a parry costs a
-# strike's worth of charge just like an attack does.
+# combat_action_fast spawns a Fast Strike, combat_parry spawns a Defense -
+# both on whichever lane is currently selected (see _update_selected_lane)
+# and both gated by the same ATK charge (see p_1.gd/p_2.gd), a parry costing
+# a strike's worth of charge just like an attack does. combat_dodge instead
+# acts across every lane at once, gated by its own separate dodge charge -
+# see _resolve_dodge.
 func _unhandled_input(event: InputEvent) -> void:
 	if not combat_active:
 		return
@@ -133,6 +143,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if player_unit._is_atk_ready():
 			player_unit._consume_atk()
 			_spawn_action(selected_lane, "player", "defense")
+	elif event.is_action_pressed("combat_dodge"):
+		if player_unit._is_dodge_ready():
+			player_unit._consume_dodge()
+			_resolve_dodge()
 
 
 # Hold-based lane select: Z (lane_select_up) pins the selector to the top
@@ -209,6 +223,8 @@ func _process(delta: float) -> void:
 		enemy_flash_t = max(enemy_flash_t - delta, 0.0)
 	player_atk_bar.value = player_unit._CURRENT_ATK
 	enemy_atk_bar.value = enemy_unit._CURRENT_ATK
+	player_dodge_bar.value = player_unit._CURRENT_DODGE
+	enemy_dodge_bar.value = enemy_unit._CURRENT_DODGE
 	# Multiplies the authored hitbox color towards white while its flash timer is active.
 	player_hitbox.modulate = Color(1, 1, 1).lerp(Color(2.5, 2.5, 2.5), player_flash_t / 0.15)
 	enemy_hitbox.modulate = Color(1, 1, 1).lerp(Color(2.5, 2.5, 2.5), enemy_flash_t / 0.15)
@@ -289,6 +305,20 @@ func _resolve_defenses() -> void:
 	for idx in consumed:
 		actions[idx]["node"].queue_free()
 		actions.remove_at(idx)
+
+
+# Instant, all-lane panic button: nullifies every enemy action (in any lane)
+# that's currently within dodge_range of the player's hitbox (left_edge_x),
+# with no damage dealt - unlike a Defense, this only saves you if the strike
+# is already right on top of you, not one still crossing the field.
+func _resolve_dodge() -> void:
+	var i := actions.size() - 1
+	while i >= 0:
+		var dict_actions: Dictionary = actions[i]
+		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= dodge_range:
+			dict_actions["node"].queue_free()
+			actions.remove_at(i)
+		i -= 1
 
 
 # Applies damage via the unit's own _take_damage() and triggers the hitbox

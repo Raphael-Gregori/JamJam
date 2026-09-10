@@ -178,11 +178,28 @@ offset_right = 243.144
 offset_bottom = 438.0
 show_percentage = false
 
+[node name="P1_DODGE_Regen" type="ProgressBar" parent="CombatHUD/Root" unique_id=1997099412]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 459.0
+offset_right = 243.144
+offset_bottom = 486.0
+show_percentage = false
+
 [node name="P2_ATK_Regen" type="ProgressBar" parent="CombatHUD/Root" unique_id=337752198]
 layout_mode = 0
 offset_left = 907.0
 offset_top = 411.0
 offset_right = 1090.144
 offset_bottom = 438.0
+fill_mode = 1
+show_percentage = false
+
+[node name="P2_DODGE_Regen" type="ProgressBar" parent="CombatHUD/Root" unique_id=1816943346]
+layout_mode = 0
+offset_left = 907.0
+offset_top = 456.0
+offset_right = 1090.144
+offset_bottom = 483.0
 fill_mode = 1
 show_percentage = false
