@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://h6xo0ity208q"]
 
-[ext_resource type="Script" uid="uid://op13pqc7e7xr" path="res://p_1.gd" id="1_0f027"]
-[ext_resource type="Script" uid="uid://lmtheqghinio" path="res://p_2.gd" id="2_gyfs4"]
-[ext_resource type="Script" uid="uid://doj13ka3wtnq4" path="res://turn.gd" id="2_turn"]
+[ext_resource type="Script" uid="uid://op13pqc7e7xr" path="res://Script/p_1.gd" id="1_0f027"]
+[ext_resource type="Script" uid="uid://lmtheqghinio" path="res://Script/p_2.gd" id="2_gyfs4"]
+[ext_resource type="Script" uid="uid://doj13ka3wtnq4" path="res://Script/turn.gd" id="2_turn"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_14and"]
 

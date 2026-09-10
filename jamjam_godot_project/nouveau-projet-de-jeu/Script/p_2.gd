@@ -14,7 +14,7 @@ extends MeshInstance3D
 @export var _REGEN_DODGE = 0.5
 
 ### Speed of the player.
-@export var _SPEED = 1
+@export var _SPEED = 350
 @export var _REGEN_ATK = 0.5
 
 

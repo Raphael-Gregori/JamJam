@@ -9,19 +9,15 @@ extends Control
 # Data for each spawnable action. Add more entries here to add new action
 # types without touching any other logic.
 
-# TODO : Rewire the spped and damage to the script p1 and p2
+# TODO : Regen of the ATK (heavy and Light)
 const ACTION_TYPES := {
 	"fast": {
 		"name": "Fast Strike",
-		"speed": 500.0,
-		"damage": 1,
 		"color": Color(0.95, 0.85, 0.2),
 		"radius": 12.0,
 	},
 	"heavy": {
 		"name": "Heavy Strike",
-		"speed": 200.0,
-		"damage": 2,
 		"color": Color(0.9, 0.2, 0.2),
 		"radius": 20.0,
 	},
@@ -162,21 +158,25 @@ func _spawn_action(lane: int, side: String, type_key: String) -> void:
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	actions_layer.add_child(node)
 
-	var a := {
+	# Speed/damage come from the acting unit's own stat block, not the action type.
+	var unit: MeshInstance3D = player_unit if side == "player" else enemy_unit
+	var dict_stats := {
 		"lane": lane,
 		"side": side,
 		"type": type,
+		"speed": unit._SPEED,
+		"damage": unit._FORCE,
 		"x": left_edge_x if side == "player" else right_edge_x,
 		"node": node,
 	}
-	_update_action_node_position(a)
-	actions.append(a)
+	_update_action_node_position(dict_stats)
+	actions.append(dict_stats)
 
 
-func _update_action_node_position(a: Dictionary) -> void:
-	var node: ColorRect = a["node"]
+func _update_action_node_position(dict_stats: Dictionary) -> void:
+	var node: ColorRect = dict_stats["node"]
 	var d: float = node.size.x
-	node.position = Vector2(a["x"] - d * 0.5, lane_ys[a["lane"]] - d * 0.5)
+	node.position = Vector2(dict_stats["x"] - d * 0.5, lane_ys[dict_stats["lane"]] - d * 0.5)
 
 
 func _process(delta: float) -> void:
@@ -208,19 +208,19 @@ func _update_enemy_spawner(delta: float) -> void:
 func _update_actions(delta: float) -> void:
 	var i := actions.size() - 1
 	while i >= 0:
-		var a: Dictionary = actions[i]
-		var speed: float = a["type"]["speed"]
-		if a["side"] == "player":
-			a["x"] += speed * delta
+		var dict_stats: Dictionary = actions[i]
+		var speed: float = dict_stats["speed"]
+		if dict_stats["side"] == "player":
+			dict_stats["x"] += speed * delta
 		else:
-			a["x"] -= speed * delta
-		_update_action_node_position(a)
+			dict_stats["x"] -= speed * delta
+		_update_action_node_position(dict_stats)
 
-		var hit: bool = (a["side"] == "player" and a["x"] >= right_edge_x) \
-			or (a["side"] == "enemy" and a["x"] <= left_edge_x)
+		var hit: bool = (dict_stats["side"] == "player" and dict_stats["x"] >= right_edge_x) \
+			or (dict_stats["side"] == "enemy" and dict_stats["x"] <= left_edge_x)
 		if hit:
-			_resolve_hit(a)
-			a["node"].queue_free()
+			_resolve_hit(dict_stats)
+			dict_stats["node"].queue_free()
 			actions.remove_at(i)
 		i -= 1
 
@@ -229,9 +229,9 @@ func _update_actions(delta: float) -> void:
 # flash. Player actions damage the enemy (reached the right/enemy edge) and
 # vice versa. HP bars read back from the unit after damage so they never
 # drift from the stat block that actually owns the value.
-func _resolve_hit(a: Dictionary) -> void:
-	var damage: int = a["type"]["damage"]
-	if a["side"] == "player":
+func _resolve_hit(dict_stats: Dictionary) -> void:
+	var damage: int = dict_stats["damage"]
+	if dict_stats["side"] == "player":
 		enemy_unit._take_damage(damage)
 		enemy_hp_bar.value = enemy_unit._CURRENT_HP
 		enemy_flash_t = 0.15
