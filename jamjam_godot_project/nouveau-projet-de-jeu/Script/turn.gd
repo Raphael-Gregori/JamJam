@@ -29,8 +29,6 @@ const ACTION_TYPES := {
 @export var lane_height := 24.0
 @export var lane_area_top_ratio := 0.158 ## # lane rows occupy this vertical band of the viewport...
 @export var lane_area_bottom_ratio := 0.566 ## # ...from top_ratio to bottom_ratio (0 = top, 1 = bottom)
-### how close (in px) an enemy action must be to the player's hitbox for a dodge to nullify it
-@export var dodge_range := 40.0
 
 ### The 3D unit stat blocks this combat overlay reports damage to - repoint
 ### these in the Inspector if P1/P2 ever move elsewhere in the tree. Resolved
@@ -46,6 +44,7 @@ var enemy_unit: MeshInstance3D
 # whatever's set on the node in the editor.
 @onready var lane_rects: Array[ColorRect] = [$Lane0, $Lane1, $Lane2]
 @onready var lane_selector: ColorRect = $LaneSelector
+@onready var dodge_zone: ColorRect = $DodgeZone
 @onready var player_hitbox: ColorRect = $PlayerHitbox
 @onready var enemy_hitbox: ColorRect = $EnemyHitbox
 @onready var actions_layer: Control = $ActionsLayer
@@ -117,6 +116,12 @@ func _init_layout() -> void:
 
 	var edge_top: float = lane_ys[0] - lane_height
 	var edge_bottom: float = lane_ys[lane_count - 1] + lane_height
+	# Shows the reach of a dodge (see player_unit._DODGE_RANGE/_resolve_dodge):
+	# any enemy action still inside this band when combat_dodge is pressed
+	# gets nullified. Sized from the player's own stat block (editable on the
+	# P1 node's Inspector) rather than a fixed value here.
+	dodge_zone.position = Vector2(left_edge_x, edge_top)
+	dodge_zone.size = Vector2(player_unit._DODGE_RANGE, edge_bottom - edge_top)
 	player_hitbox.position = Vector2(left_edge_x - 4.0, edge_top)
 	player_hitbox.size = Vector2(6.0, edge_bottom - edge_top)
 	enemy_hitbox.position = Vector2(right_edge_x - 2.0, edge_top)
@@ -308,14 +313,14 @@ func _resolve_defenses() -> void:
 
 
 # Instant, all-lane panic button: nullifies every enemy action (in any lane)
-# that's currently within dodge_range of the player's hitbox (left_edge_x),
-# with no damage dealt - unlike a Defense, this only saves you if the strike
-# is already right on top of you, not one still crossing the field.
+# that's currently within the player's own _DODGE_RANGE of their hitbox
+# (left_edge_x), with no damage dealt - unlike a Defense, this only saves you
+# if the strike is already right on top of you, not one still crossing the field.
 func _resolve_dodge() -> void:
 	var i := actions.size() - 1
 	while i >= 0:
 		var dict_actions: Dictionary = actions[i]
-		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= dodge_range:
+		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= player_unit._DODGE_RANGE:
 			dict_actions["node"].queue_free()
 			actions.remove_at(i)
 		i -= 1

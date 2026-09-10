@@ -19,6 +19,10 @@ extends MeshInstance3D
 @export var _DODGE_MAX = 1.0
 @export var _CURRENT_DODGE = 0.0
 
+### How close (in px) an enemy action must be to this unit's hitbox for a
+### dodge to nullify it. Also sizes the DodgeZone visual in main_scene.tscn.
+@export var _DODGE_RANGE = 40.0
+
 ### Speed of the player.
 @export var _SPEED = 350
 @export var _REGEN_ATK = 0.5
