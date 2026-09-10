@@ -52,6 +52,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6215904, 0.6392977, 1.30683
 mesh = SubResource("BoxMesh_uj0um")
 surface_material_override/0 = SubResource("StandardMaterial3D_7jxi0")
 script = ExtResource("2_gyfs4")
+_REGEN_ATK = 0.245
 
 [node name="StaticBody3D" type="StaticBody3D" parent="P2" unique_id=1093758040]
 
@@ -175,4 +176,13 @@ offset_left = 60.0
 offset_top = 411.0
 offset_right = 243.144
 offset_bottom = 438.0
+show_percentage = false
+
+[node name="P2_ATK_Regen" type="ProgressBar" parent="CombatHUD/Root" unique_id=337752198]
+layout_mode = 0
+offset_left = 907.0
+offset_top = 411.0
+offset_right = 1090.144
+offset_bottom = 438.0
+fill_mode = 1
 show_percentage = false
