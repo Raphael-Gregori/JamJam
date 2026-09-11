@@ -131,11 +131,29 @@ offset_bottom = 390.768
 mouse_filter = 2
 color = Color(1, 0.4, 0.4, 1)
 
+[node name="EnemyDodgeZone" type="ColorRect" parent="CombatHUD/Root" unique_id=825263055]
+layout_mode = 0
+offset_left = 1052.0
+offset_top = 78.384
+offset_right = 1092.0
+offset_bottom = 390.768
+mouse_filter = 2
+color = Color(1, 0.4, 0.4, 0.15)
+
 [node name="LaneSelector" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000011]
 layout_mode = 0
 offset_left = 44.0
 offset_top = 220.576
 offset_right = 54.0
+offset_bottom = 248.576
+mouse_filter = 2
+color = Color(1, 1, 0.3, 1)
+
+[node name="EnemyLaneSelector" type="ColorRect" parent="CombatHUD/Root"]
+layout_mode = 0
+offset_left = 1098.0
+offset_top = 220.576
+offset_right = 1108.0
 offset_bottom = 248.576
 mouse_filter = 2
 color = Color(1, 1, 0.3, 1)

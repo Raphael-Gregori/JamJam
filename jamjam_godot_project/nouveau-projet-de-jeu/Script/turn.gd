@@ -44,7 +44,9 @@ var enemy_unit: MeshInstance3D
 # whatever's set on the node in the editor.
 @onready var lane_rects: Array[ColorRect] = [$Lane0, $Lane1, $Lane2]
 @onready var lane_selector: ColorRect = $LaneSelector
+@onready var enemy_lane_selector: ColorRect = $EnemyLaneSelector
 @onready var dodge_zone: ColorRect = $DodgeZone
+@onready var enemy_dodge_zone: ColorRect = $EnemyDodgeZone
 @onready var player_hitbox: ColorRect = $PlayerHitbox
 @onready var enemy_hitbox: ColorRect = $EnemyHitbox
 @onready var actions_layer: Control = $ActionsLayer
@@ -63,6 +65,8 @@ var left_edge_x := 0.0
 var right_edge_x := 0.0
 
 var selected_lane := 1
+var enemy_selected_lane := 1
+var enemy_human_controlled := true
 var combat_active := true
 
 # Actions currently scrolling: {lane, side, type, x, node}. "node" is the
@@ -95,6 +99,7 @@ func _ready() -> void:
 	player_dodge_bar.value = player_unit._CURRENT_DODGE
 	enemy_dodge_bar.value = enemy_unit._CURRENT_DODGE
 	result_label.visible = false
+	enemy_lane_selector.visible = enemy_human_controlled
 
 # Lay out the 3 lanes and the two edge thresholds from the current viewport size,
 # then push those positions/sizes onto the actual lane/hitbox nodes.
@@ -122,12 +127,16 @@ func _init_layout() -> void:
 	# P1 node's Inspector) rather than a fixed value here.
 	dodge_zone.position = Vector2(left_edge_x, edge_top)
 	dodge_zone.size = Vector2(player_unit._DODGE_RANGE, edge_bottom - edge_top)
+	# Mirrors dodge_zone for the enemy side, from enemy_unit._DODGE_RANGE.
+	enemy_dodge_zone.position = Vector2(right_edge_x - enemy_unit._DODGE_RANGE, edge_top)
+	enemy_dodge_zone.size = Vector2(enemy_unit._DODGE_RANGE, edge_bottom - edge_top)
 	player_hitbox.position = Vector2(left_edge_x - 4.0, edge_top)
 	player_hitbox.size = Vector2(6.0, edge_bottom - edge_top)
 	enemy_hitbox.position = Vector2(right_edge_x - 2.0, edge_top)
 	enemy_hitbox.size = Vector2(6.0, edge_bottom - edge_top)
 
 	_update_lane_selector_position()
+	_update_enemy_lane_selector_position()
 	_update_lane_highlight()
 
 
@@ -136,9 +145,15 @@ func _init_layout() -> void:
 # and both gated by the same ATK charge (see p_1.gd/p_2.gd), a parry costing
 # a strike's worth of charge just like an attack does. combat_dodge instead
 # acts across every lane at once, gated by its own separate dodge charge -
-# see _resolve_dodge.
+# see _resolve_dodge. toggle_p2_control flips P2 between this same kind of
+# manual control (via the mirrored P2_* actions) and the AI auto-spawner in
+# _update_enemy_spawner.
 func _unhandled_input(event: InputEvent) -> void:
 	if not combat_active:
+		return
+	if event.is_action_pressed("toggle_p2_control"):
+		enemy_human_controlled = not enemy_human_controlled
+		enemy_lane_selector.visible = enemy_human_controlled
 		return
 	if event.is_action_pressed("combat_action_fast"):
 		if player_unit._is_atk_ready():
@@ -152,6 +167,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		if player_unit._is_dodge_ready():
 			player_unit._consume_dodge()
 			_resolve_dodge()
+	elif not enemy_human_controlled:
+		return
+	elif event.is_action_pressed("P2_combat_action_fast"):
+		if enemy_unit._is_atk_ready():
+			enemy_unit._consume_atk()
+			_spawn_action(enemy_selected_lane, "enemy", "fast")
+	elif event.is_action_pressed("P2_combat_parry"):
+		if enemy_unit._is_atk_ready():
+			enemy_unit._consume_atk()
+			_spawn_action(enemy_selected_lane, "enemy", "defense")
+	elif event.is_action_pressed("P2_combat_dodge"):
+		if enemy_unit._is_dodge_ready():
+			enemy_unit._consume_dodge()
+			_resolve_enemy_dodge()
 
 
 # Hold-based lane select: Z (lane_select_up) pins the selector to the top
@@ -173,6 +202,26 @@ func _update_selected_lane() -> void:
 func _update_lane_selector_position() -> void:
 	var y: float = lane_ys[selected_lane]
 	lane_selector.position = Vector2(left_edge_x - 16.0, y - lane_selector.size.y * 0.5)
+
+
+# Mirrors _update_selected_lane/_update_lane_selector_position for a human-
+# controlled P2 - see enemy_human_controlled/toggle_p2_control.
+func _update_enemy_selected_lane() -> void:
+	if not enemy_human_controlled:
+		return
+	var new_lane := 1
+	if Input.is_action_pressed("P2_lane_select_up"):
+		new_lane = 0
+	elif Input.is_action_pressed("P2_lane_select_down"):
+		new_lane = lane_count - 1
+	if new_lane != enemy_selected_lane:
+		enemy_selected_lane = new_lane
+		_update_enemy_lane_selector_position()
+
+
+func _update_enemy_lane_selector_position() -> void:
+	var y: float = lane_ys[enemy_selected_lane]
+	enemy_lane_selector.position = Vector2(right_edge_x + 6.0, y - enemy_lane_selector.size.y * 0.5)
 
 
 # Brightens the selected lane's row via modulate, leaving its authored base
@@ -222,6 +271,7 @@ func _update_action_node_position(dict_stats: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if combat_active:
 		_update_selected_lane()
+		_update_enemy_selected_lane()
 		_update_enemy_spawner(delta)
 		_update_actions(delta)
 		player_flash_t = max(player_flash_t - delta, 0.0)
@@ -236,10 +286,12 @@ func _process(delta: float) -> void:
 
 
 # Regen-driven enemy AI: the instant the enemy's own ATK charge is full it
-# acts automatically, from a random lane (there is no enemy lane-select
-# mechanic) and randomly choosing between a Fast Strike and a Defense, just
-# like the player can - consuming its charge either way.
+# acts automatically, from a random lane and randomly choosing between a
+# Fast Strike and a Defense, just like the player can - consuming its charge
+# either way. Disabled while a human is playing P2 - see enemy_human_controlled.
 func _update_enemy_spawner(_delta: float) -> void:
+	if enemy_human_controlled:
+		return
 	if not enemy_unit._is_atk_ready():
 		return
 	enemy_unit._consume_atk()
@@ -321,6 +373,18 @@ func _resolve_dodge() -> void:
 	while i >= 0:
 		var dict_actions: Dictionary = actions[i]
 		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= player_unit._DODGE_RANGE:
+			dict_actions["node"].queue_free()
+			actions.remove_at(i)
+		i -= 1
+
+
+# Mirrors _resolve_dodge for a human-controlled P2: nullifies every player
+# action within enemy_unit._DODGE_RANGE of the enemy's own edge (right_edge_x).
+func _resolve_enemy_dodge() -> void:
+	var i := actions.size() - 1
+	while i >= 0:
+		var dict_actions: Dictionary = actions[i]
+		if dict_actions["side"] == "player" and right_edge_x - dict_actions["x"] <= enemy_unit._DODGE_RANGE:
 			dict_actions["node"].queue_free()
 			actions.remove_at(i)
 		i -= 1
