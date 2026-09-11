@@ -15,22 +15,31 @@ extends MeshInstance3D
 @export var _REGEN_DODGE = 0.5
 
 ### Dodge charge: regenerates at _REGEN_DODGE units/sec, dodge fires (and
-### consumes the charge) once it reaches _DODGE_MAX.
+## consumes the charge) once it reaches _DODGE_COST.
 @export var _DODGE_MAX = 1.0
 @export var _CURRENT_DODGE = 0.0
+### How much of the dodge charge a dodge consumes. Defaults to _DODGE_MAX so
+## behavior is unchanged (must be full to fire) until tuned in the Inspector.
+@export var _DODGE_COST = 1.0
 
 ### How close (in px) an enemy action must be to this unit's hitbox for a
-### dodge to nullify it. Also sizes the DodgeZone visual in main_scene.tscn.
+## dodge to nullify it. Also sizes the DodgeZone visual in main_scene.tscn.
 @export var _DODGE_RANGE = 40.0
 
 ### Speed of the player.
 @export var _SPEED = 350
 @export var _REGEN_ATK = 0.5
 
-### ATK charge 
-## regenerates at _REGEN_ATK units/sec, attack fires (and consumes the charge) once it reaches _ATK_MAX.
+### ATK charge
+## regenerates at _REGEN_ATK units/sec, attack fires (and consumes the charge) once it reaches its own action cost.
 @export var _ATK_MAX = 1.0
 @export var _CURRENT_ATK = 0.0
+### Per-action ATK costs. Defaults to _ATK_MAX so behavior is unchanged
+## (must be full to fire, fully consumed) until tuned in the Inspector -
+## a cheaper action can then fire before the bar is completely full and
+## leaves the remainder banked instead of resetting to 0.
+@export var _FAST_COST = 1.0
+@export var _PARRY_COST = 1.0
 
 
 # Called when the node enters the scene tree for the first time.
@@ -51,17 +60,17 @@ func _take_damage(damage: float):
 			print ("You Died ! ")
 
 
-func _is_atk_ready() -> bool:
-	return _CURRENT_ATK >= _ATK_MAX
+func _is_atk_ready(cost: float) -> bool:
+	return _CURRENT_ATK >= cost
 
 
-func _consume_atk() -> void:
-	_CURRENT_ATK = 0.0
+func _consume_atk(cost: float) -> void:
+	_CURRENT_ATK -= cost
 
 
-func _is_dodge_ready() -> bool:
-	return _CURRENT_DODGE >= _DODGE_MAX
+func _is_dodge_ready(cost: float) -> bool:
+	return _CURRENT_DODGE >= cost
 
 
-func _consume_dodge() -> void:
-	_CURRENT_DODGE = 0.0
+func _consume_dodge(cost: float) -> void:
+	_CURRENT_DODGE -= cost

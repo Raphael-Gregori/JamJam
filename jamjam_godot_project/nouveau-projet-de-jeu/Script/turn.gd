@@ -142,12 +142,13 @@ func _init_layout() -> void:
 
 # combat_action_fast spawns a Fast Strike, combat_parry spawns a Defense -
 # both on whichever lane is currently selected (see _update_selected_lane)
-# and both gated by the same ATK charge (see p_1.gd/p_2.gd), a parry costing
-# a strike's worth of charge just like an attack does. combat_dodge instead
-# acts across every lane at once, gated by its own separate dodge charge -
-# see _resolve_dodge. toggle_p2_control flips P2 between this same kind of
-# manual control (via the mirrored P2_* actions) and the AI auto-spawner in
-# _update_enemy_spawner.
+# and both drawn from the same ATK charge, but each at its own cost
+# (_FAST_COST/_PARRY_COST in p_1.gd/p_2.gd) rather than always requiring/
+# draining a full bar - firing leaves any remainder banked instead of
+# resetting to 0. combat_dodge instead acts across every lane at once, gated
+# by its own separate dodge charge at _DODGE_COST - see _resolve_dodge.
+# toggle_p2_control flips P2 between this same kind of manual control (via
+# the mirrored P2_* actions) and the AI auto-spawner in _update_enemy_spawner.
 func _unhandled_input(event: InputEvent) -> void:
 	if not combat_active:
 		return
@@ -156,30 +157,30 @@ func _unhandled_input(event: InputEvent) -> void:
 		enemy_lane_selector.visible = enemy_human_controlled
 		return
 	if event.is_action_pressed("combat_action_fast"):
-		if player_unit._is_atk_ready():
-			player_unit._consume_atk()
+		if player_unit._is_atk_ready(player_unit._FAST_COST):
+			player_unit._consume_atk(player_unit._FAST_COST)
 			_spawn_action(selected_lane, "player", "fast")
 	elif event.is_action_pressed("combat_parry"):
-		if player_unit._is_atk_ready():
-			player_unit._consume_atk()
+		if player_unit._is_atk_ready(player_unit._PARRY_COST):
+			player_unit._consume_atk(player_unit._PARRY_COST)
 			_spawn_action(selected_lane, "player", "defense")
 	elif event.is_action_pressed("combat_dodge"):
-		if player_unit._is_dodge_ready():
-			player_unit._consume_dodge()
+		if player_unit._is_dodge_ready(player_unit._DODGE_COST):
+			player_unit._consume_dodge(player_unit._DODGE_COST)
 			_resolve_dodge()
 	elif not enemy_human_controlled:
 		return
 	elif event.is_action_pressed("P2_combat_action_fast"):
-		if enemy_unit._is_atk_ready():
-			enemy_unit._consume_atk()
+		if enemy_unit._is_atk_ready(enemy_unit._FAST_COST):
+			enemy_unit._consume_atk(enemy_unit._FAST_COST)
 			_spawn_action(enemy_selected_lane, "enemy", "fast")
 	elif event.is_action_pressed("P2_combat_parry"):
-		if enemy_unit._is_atk_ready():
-			enemy_unit._consume_atk()
+		if enemy_unit._is_atk_ready(enemy_unit._PARRY_COST):
+			enemy_unit._consume_atk(enemy_unit._PARRY_COST)
 			_spawn_action(enemy_selected_lane, "enemy", "defense")
 	elif event.is_action_pressed("P2_combat_dodge"):
-		if enemy_unit._is_dodge_ready():
-			enemy_unit._consume_dodge()
+		if enemy_unit._is_dodge_ready(enemy_unit._DODGE_COST):
+			enemy_unit._consume_dodge(enemy_unit._DODGE_COST)
 			_resolve_enemy_dodge()
 
 
@@ -285,18 +286,20 @@ func _process(delta: float) -> void:
 	enemy_hitbox.modulate = Color(1, 1, 1).lerp(Color(2.5, 2.5, 2.5), enemy_flash_t / 0.15)
 
 
-# Regen-driven enemy AI: the instant the enemy's own ATK charge is full it
-# acts automatically, from a random lane and randomly choosing between a
-# Fast Strike and a Defense, just like the player can - consuming its charge
-# either way. Disabled while a human is playing P2 - see enemy_human_controlled.
+# Regen-driven enemy AI: randomly picks between a Fast Strike and a Defense,
+# then acts automatically (from a random lane) as soon as the enemy's ATK
+# charge covers that action's own cost (_FAST_COST/_PARRY_COST in p_2.gd),
+# just like the player can - consuming only that cost. Disabled while a
+# human is playing P2 - see enemy_human_controlled.
 func _update_enemy_spawner(_delta: float) -> void:
 	if enemy_human_controlled:
 		return
-	if not enemy_unit._is_atk_ready():
-		return
-	enemy_unit._consume_atk()
-	var lane := randi() % lane_count
 	var type_key: String = ["fast", "defense"][randi() % 2]
+	var cost: float = enemy_unit._FAST_COST if type_key == "fast" else enemy_unit._PARRY_COST
+	if not enemy_unit._is_atk_ready(cost):
+		return
+	enemy_unit._consume_atk(cost)
+	var lane := randi() % lane_count
 	_spawn_action(lane, "enemy", type_key)
 
 
