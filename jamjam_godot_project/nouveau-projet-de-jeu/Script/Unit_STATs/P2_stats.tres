@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="UnitStats" format=3]
+
+[ext_resource type="Script" uid="uid://voislg2nlw1r" path="res://Script/stats.gd" id="1_vnat5"]
+
+[resource]
+script = ExtResource("1_vnat5")
+_REGEN_ATK = 0.245
+metadata/_custom_type_script = "uid://voislg2nlw1r"

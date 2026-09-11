@@ -87,16 +87,16 @@ func _ready() -> void:
 	
 	# p_1.gd/p_2.gd already reset _CURRENT_HP to _HP_MAX in their own _ready();
 	# P1/P2 are earlier siblings of CombatHUD so theirs has already run by now.
-	player_hp_bar.max_value = player_unit._HP_MAX
-	enemy_hp_bar.max_value = enemy_unit._HP_MAX
+	player_hp_bar.max_value = player_unit._STATS._HP_MAX
+	enemy_hp_bar.max_value = enemy_unit._STATS._HP_MAX
 	player_hp_bar.value = player_unit._CURRENT_HP
 	enemy_hp_bar.value = enemy_unit._CURRENT_HP
-	player_atk_bar.max_value = player_unit._ATK_MAX
-	enemy_atk_bar.max_value = enemy_unit._ATK_MAX
+	player_atk_bar.max_value = player_unit._STATS._ATK_MAX
+	enemy_atk_bar.max_value = enemy_unit._STATS._ATK_MAX
 	player_atk_bar.value = player_unit._CURRENT_ATK
 	enemy_atk_bar.value = enemy_unit._CURRENT_ATK
-	player_dodge_bar.max_value = player_unit._DODGE_MAX
-	enemy_dodge_bar.max_value = enemy_unit._DODGE_MAX
+	player_dodge_bar.max_value = player_unit._STATS._DODGE_MAX
+	enemy_dodge_bar.max_value = enemy_unit._STATS._DODGE_MAX
 	player_dodge_bar.value = player_unit._CURRENT_DODGE
 	enemy_dodge_bar.value = enemy_unit._CURRENT_DODGE
 	result_label.visible = false
@@ -122,15 +122,15 @@ func _init_layout() -> void:
 
 	var edge_top: float = lane_ys[0] - lane_height
 	var edge_bottom: float = lane_ys[lane_count - 1] + lane_height
-	# Shows the reach of a dodge (see player_unit._DODGE_RANGE/_resolve_dodge):
+	# Shows the reach of a dodge (see player_unit._STATS._DODGE_RANGE/_resolve_dodge):
 	# any enemy action still inside this band when combat_dodge is pressed
 	# gets nullified. Sized from the player's own stat block (editable on the
 	# P1 node's Inspector) rather than a fixed value here.
 	dodge_zone.position = Vector2(left_edge_x, edge_top)
-	dodge_zone.size = Vector2(player_unit._DODGE_RANGE, edge_bottom - edge_top)
-	# Mirrors dodge_zone for the enemy side, from enemy_unit._DODGE_RANGE.
-	enemy_dodge_zone.position = Vector2(right_edge_x - enemy_unit._DODGE_RANGE, edge_top)
-	enemy_dodge_zone.size = Vector2(enemy_unit._DODGE_RANGE, edge_bottom - edge_top)
+	dodge_zone.size = Vector2(player_unit._STATS._DODGE_RANGE, edge_bottom - edge_top)
+	# Mirrors dodge_zone for the enemy side, from enemy_unit._STATS._DODGE_RANGE.
+	enemy_dodge_zone.position = Vector2(right_edge_x - enemy_unit._STATS._DODGE_RANGE, edge_top)
+	enemy_dodge_zone.size = Vector2(enemy_unit._STATS._DODGE_RANGE, edge_bottom - edge_top)
 	player_hitbox.position = Vector2(left_edge_x - 4.0, edge_top)
 	player_hitbox.size = Vector2(6.0, edge_bottom - edge_top)
 	enemy_hitbox.position = Vector2(right_edge_x - 2.0, edge_top)
@@ -144,10 +144,11 @@ func _init_layout() -> void:
 # combat_action_fast spawns a Fast Strike, combat_parry spawns a Defense -
 # both on whichever lane is currently selected (see _update_selected_lane)
 # and both drawn from the same ATK charge, but each at its own cost
-# (_FAST_COST/_PARRY_COST in p_1.gd/p_2.gd) rather than always requiring/
-# draining a full bar - firing leaves any remainder banked instead of
-# resetting to 0. combat_dodge instead acts across every lane at once, gated
-# by its own separate dodge charge at _DODGE_COST - see _resolve_dodge.
+# (_STATS._FAST_COST/_STATS._PARRY_COST, see stats.gd/UnitStats) rather than
+# always requiring/draining a full bar - firing leaves any remainder banked
+# instead of resetting to 0. combat_dodge instead acts across every lane at
+# once, gated by its own separate dodge charge at _STATS._DODGE_COST - see
+# _resolve_dodge.
 # toggle_p2_control flips P2 between this same kind of manual control (via
 # the mirrored P2_* actions) and the AI auto-spawner in _update_enemy_spawner.
 func _unhandled_input(event: InputEvent) -> void:
@@ -158,30 +159,30 @@ func _unhandled_input(event: InputEvent) -> void:
 		enemy_lane_selector.visible = enemy_human_controlled
 		return
 	if event.is_action_pressed("combat_action_fast"):
-		if player_unit._is_atk_ready(player_unit._FAST_COST):
-			player_unit._consume_atk(player_unit._FAST_COST)
+		if player_unit._is_atk_ready(player_unit._STATS._FAST_COST):
+			player_unit._consume_atk(player_unit._STATS._FAST_COST)
 			_spawn_action(selected_lane, "player", "fast")
 	elif event.is_action_pressed("combat_parry"):
-		if player_unit._is_atk_ready(player_unit._PARRY_COST):
-			player_unit._consume_atk(player_unit._PARRY_COST)
+		if player_unit._is_atk_ready(player_unit._STATS._PARRY_COST):
+			player_unit._consume_atk(player_unit._STATS._PARRY_COST)
 			_spawn_action(selected_lane, "player", "defense")
 	elif event.is_action_pressed("combat_dodge"):
-		if player_unit._is_dodge_ready(player_unit._DODGE_COST):
-			player_unit._consume_dodge(player_unit._DODGE_COST)
+		if player_unit._is_dodge_ready(player_unit._STATS._DODGE_COST):
+			player_unit._consume_dodge(player_unit._STATS._DODGE_COST)
 			_resolve_dodge()
 	elif not enemy_human_controlled:
 		return
 	elif event.is_action_pressed("P2_combat_action_fast"):
-		if enemy_unit._is_atk_ready(enemy_unit._FAST_COST):
-			enemy_unit._consume_atk(enemy_unit._FAST_COST)
+		if enemy_unit._is_atk_ready(enemy_unit._STATS._FAST_COST):
+			enemy_unit._consume_atk(enemy_unit._STATS._FAST_COST)
 			_spawn_action(enemy_selected_lane, "enemy", "fast")
 	elif event.is_action_pressed("P2_combat_parry"):
-		if enemy_unit._is_atk_ready(enemy_unit._PARRY_COST):
-			enemy_unit._consume_atk(enemy_unit._PARRY_COST)
+		if enemy_unit._is_atk_ready(enemy_unit._STATS._PARRY_COST):
+			enemy_unit._consume_atk(enemy_unit._STATS._PARRY_COST)
 			_spawn_action(enemy_selected_lane, "enemy", "defense")
 	elif event.is_action_pressed("P2_combat_dodge"):
-		if enemy_unit._is_dodge_ready(enemy_unit._DODGE_COST):
-			enemy_unit._consume_dodge(enemy_unit._DODGE_COST)
+		if enemy_unit._is_dodge_ready(enemy_unit._STATS._DODGE_COST):
+			enemy_unit._consume_dodge(enemy_unit._STATS._DODGE_COST)
 			_resolve_enemy_dodge()
 
 
@@ -254,8 +255,8 @@ func _spawn_action(lane: int, side: String, type_key: String) -> void:
 		"side": side,
 		"type_key": type_key,
 		"type": type,
-		"speed": unit._SPEED,
-		"damage": unit._FORCE,
+		"speed": unit._STATS._SPEED,
+		"damage": unit._STATS._FORCE,
 		"x": left_edge_x if side == "player" else right_edge_x,
 		"target_x": target_x,
 		"node": node,
@@ -289,14 +290,14 @@ func _process(delta: float) -> void:
 
 # Regen-driven enemy AI: randomly picks between a Fast Strike and a Defense,
 # then acts automatically (from a random lane) as soon as the enemy's ATK
-# charge covers that action's own cost (_FAST_COST/_PARRY_COST in p_2.gd),
+# charge covers that action's own cost (_STATS._FAST_COST/_STATS._PARRY_COST),
 # just like the player can - consuming only that cost. Disabled while a
 # human is playing P2 - see enemy_human_controlled.
 func _update_enemy_spawner(_delta: float) -> void:
 	if enemy_human_controlled:
 		return
 	var type_key: String = ["fast", "defense"][randi() % 2]
-	var cost: float = enemy_unit._FAST_COST if type_key == "fast" else enemy_unit._PARRY_COST
+	var cost: float = enemy_unit._STATS._FAST_COST if type_key == "fast" else enemy_unit._STATS._PARRY_COST
 	if not enemy_unit._is_atk_ready(cost):
 		return
 	enemy_unit._consume_atk(cost)
@@ -376,19 +377,19 @@ func _resolve_dodge() -> void:
 	var i := actions.size() - 1
 	while i >= 0:
 		var dict_actions: Dictionary = actions[i]
-		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= player_unit._DODGE_RANGE:
+		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= player_unit._STATS._DODGE_RANGE:
 			dict_actions["node"].queue_free()
 			actions.remove_at(i)
 		i -= 1
 
 
 # Mirrors _resolve_dodge for a human-controlled P2: nullifies every player
-# action within enemy_unit._DODGE_RANGE of the enemy's own edge (right_edge_x).
+# action within enemy_unit._STATS._DODGE_RANGE of the enemy's own edge (right_edge_x).
 func _resolve_enemy_dodge() -> void:
 	var i := actions.size() - 1
 	while i >= 0:
 		var dict_actions: Dictionary = actions[i]
-		if dict_actions["side"] == "player" and right_edge_x - dict_actions["x"] <= enemy_unit._DODGE_RANGE:
+		if dict_actions["side"] == "player" and right_edge_x - dict_actions["x"] <= enemy_unit._STATS._DODGE_RANGE:
 			dict_actions["node"].queue_free()
 			actions.remove_at(i)
 		i -= 1
@@ -432,8 +433,8 @@ func _debug_print_stats() -> void:
 func _debug_print_unit_stats(label: String, unit: MeshInstance3D, header_hex: String) -> void:
 	print_rich("[b][color=#%s]── %s stats ──[/color][/b]" % [header_hex, label])
 	print_rich("  [color=lime][b]HP[/b][/color]    HP_MAX=%s  START_HP=%s" \
-		% [unit._HP_MAX, unit._START_HP])
+		% [unit._STATS._HP_MAX, unit._STATS._START_HP])
 	print_rich("  [color=yellow][b]ATK[/b][/color]   FORCE=%s  SPEED=%s  REGEN_ATK=%s  ATK_MAX=%s  FAST_COST=%s  PARRY_COST=%s" \
-		% [unit._FORCE, unit._SPEED, unit._REGEN_ATK, unit._ATK_MAX, unit._FAST_COST, unit._PARRY_COST])
+		% [unit._STATS._FORCE, unit._STATS._SPEED, unit._STATS._REGEN_ATK, unit._STATS._ATK_MAX, unit._STATS._FAST_COST, unit._STATS._PARRY_COST])
 	print_rich("  [color=aqua][b]DODGE[/b][/color] AGILITY=%s  REGEN_DODGE=%s  DODGE_MAX=%s  DODGE_RANGE=%s  DODGE_COST=%s" \
-		% [unit._AGILITY, unit._REGEN_DODGE, unit._DODGE_MAX, unit._DODGE_RANGE, unit._DODGE_COST])
+		% [unit._STATS._AGILITY, unit._STATS._REGEN_DODGE, unit._STATS._DODGE_MAX, unit._STATS._DODGE_RANGE, unit._STATS._DODGE_COST])

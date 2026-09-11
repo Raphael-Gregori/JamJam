@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="UnitStats" format=3 uid="uid://73fxw6pj8fnc"]
+
+[ext_resource type="Script" uid="uid://voislg2nlw1r" path="res://Script/stats.gd" id="1_vnat5"]
+
+[resource]
+script = ExtResource("1_vnat5")
+_DODGE_MAX = 3.0
+_DODGE_COST = 3.0
+_REGEN_DODGE = 0.75
+metadata/_custom_type_script = "uid://voislg2nlw1r"

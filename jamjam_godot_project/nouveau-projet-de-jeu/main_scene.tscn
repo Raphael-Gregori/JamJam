@@ -1,8 +1,10 @@
 [gd_scene format=3 uid="uid://h6xo0ity208q"]
 
 [ext_resource type="Script" uid="uid://op13pqc7e7xr" path="res://Script/p_1.gd" id="1_0f027"]
+[ext_resource type="Resource" uid="uid://73fxw6pj8fnc" path="res://Script/Unit_STATs/P1_stats.tres" id="2_d5x1h"]
 [ext_resource type="Script" uid="uid://lmtheqghinio" path="res://Script/p_2.gd" id="2_gyfs4"]
 [ext_resource type="Script" uid="uid://doj13ka3wtnq4" path="res://Script/turn.gd" id="2_turn"]
+[ext_resource type="Resource" path="res://Script/Unit_STATs/P2_stats.tres" id="3_p2stats"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_14and"]
 
@@ -41,9 +43,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3593531, 0.6392977, 1.3068
 mesh = SubResource("BoxMesh_uj0um")
 surface_material_override/0 = SubResource("StandardMaterial3D_14and")
 script = ExtResource("1_0f027")
-_REGEN_DODGE = 0.75
-_DODGE_MAX = 3.0
-_DODGE_COST = 3.0
+_STATS = ExtResource("2_d5x1h")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="P1" unique_id=654527161]
 
@@ -55,7 +55,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6215904, 0.6392977, 1.30683
 mesh = SubResource("BoxMesh_uj0um")
 surface_material_override/0 = SubResource("StandardMaterial3D_7jxi0")
 script = ExtResource("2_gyfs4")
-_REGEN_ATK = 0.245
+_STATS = ExtResource("3_p2stats")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="P2" unique_id=1093758040]
 
@@ -69,6 +69,7 @@ transform = Transform3D(0.87867177, 0.35946983, -0.31419322, 0, 0.65809774, 0.75
 shadow_enabled = true
 
 [node name="CombatHUD" type="CanvasLayer" parent="." unique_id=2001000001]
+follow_viewport_enabled = true
 
 [node name="Root" type="Control" parent="CombatHUD" unique_id=2001000002]
 layout_mode = 3
@@ -83,27 +84,29 @@ script = ExtResource("2_turn")
 [node name="Lane0" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000006]
 layout_mode = 0
 offset_left = 60.0
-offset_top = 90.384
+offset_top = 90.0
 offset_right = 1092.0
-offset_bottom = 114.384
+offset_bottom = 114.0
+pivot_offset = Vector2(516, 0)
 mouse_filter = 2
 color = Color(1, 1, 1, 0.08)
 
 [node name="Lane1" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000007]
 layout_mode = 0
 offset_left = 60.0
-offset_top = 222.576
+offset_top = 222.0
 offset_right = 1092.0
-offset_bottom = 246.576
+offset_bottom = 246.0
 mouse_filter = 2
 color = Color(1, 1, 1, 0.08)
 
 [node name="Lane2" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000008]
 layout_mode = 0
 offset_left = 60.0
-offset_top = 354.768
+offset_top = 354.0
 offset_right = 1092.0
-offset_bottom = 378.768
+offset_bottom = 378.0
+offset_transform_enabled = true
 mouse_filter = 2
 color = Color(1, 1, 1, 0.08)
 
@@ -146,18 +149,18 @@ color = Color(1, 0.4, 0.4, 0.15)
 [node name="LaneSelector" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000011]
 layout_mode = 0
 offset_left = 44.0
-offset_top = 220.576
+offset_top = 220.0
 offset_right = 54.0
-offset_bottom = 248.576
+offset_bottom = 248.0
 mouse_filter = 2
 color = Color(1, 1, 0.3, 1)
 
 [node name="EnemyLaneSelector" type="ColorRect" parent="CombatHUD/Root" unique_id=767247378]
 layout_mode = 0
 offset_left = 1098.0
-offset_top = 220.576
+offset_top = 220.0
 offset_right = 1108.0
-offset_bottom = 248.576
+offset_bottom = 248.0
 mouse_filter = 2
 color = Color(1, 1, 0.3, 1)
 
