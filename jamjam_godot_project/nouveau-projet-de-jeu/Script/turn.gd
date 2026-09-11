@@ -81,6 +81,7 @@ var enemy_flash_t := 0.0
 func _ready() -> void:
 	player_unit = get_node(player_unit_path)
 	enemy_unit = get_node(enemy_unit_path)
+	_debug_print_stats()
 
 	_init_layout()
 	
@@ -418,3 +419,21 @@ func _end_combat(text: String) -> void:
 	combat_active = false
 	result_label.text = text
 	result_label.visible = true
+
+
+# Debug-only: dumps each unit's tunable "final" stats (the maxima/costs set
+# in the Inspector, not the live CURRENT_* charge pools) to the Output panel
+# once at combat start, color-coded by category so they're easy to scan.
+func _debug_print_stats() -> void:
+	_debug_print_unit_stats("P1", player_unit, "6699ff")
+	_debug_print_unit_stats("P2", enemy_unit, "ff6666")
+
+
+func _debug_print_unit_stats(label: String, unit: MeshInstance3D, header_hex: String) -> void:
+	print_rich("[b][color=#%s]── %s stats ──[/color][/b]" % [header_hex, label])
+	print_rich("  [color=lime][b]HP[/b][/color]    HP_MAX=%s  START_HP=%s" \
+		% [unit._HP_MAX, unit._START_HP])
+	print_rich("  [color=yellow][b]ATK[/b][/color]   FORCE=%s  SPEED=%s  REGEN_ATK=%s  ATK_MAX=%s  FAST_COST=%s  PARRY_COST=%s" \
+		% [unit._FORCE, unit._SPEED, unit._REGEN_ATK, unit._ATK_MAX, unit._FAST_COST, unit._PARRY_COST])
+	print_rich("  [color=aqua][b]DODGE[/b][/color] AGILITY=%s  REGEN_DODGE=%s  DODGE_MAX=%s  DODGE_RANGE=%s  DODGE_COST=%s" \
+		% [unit._AGILITY, unit._REGEN_DODGE, unit._DODGE_MAX, unit._DODGE_RANGE, unit._DODGE_COST])
