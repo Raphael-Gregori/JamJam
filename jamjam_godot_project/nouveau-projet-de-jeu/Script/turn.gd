@@ -356,7 +356,7 @@ func _resolve_defenses() -> void:
 			var crossed: bool = opposing_action["x"] <= defense["x"] if defense["side"] == "player" \
 				else opposing_action["x"] >= defense["x"]
 			if crossed:
-				consumed.append(i)
+				#consumed.append(i)
 				consumed.append(j)
 				break
 
