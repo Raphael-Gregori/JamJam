@@ -6,5 +6,4 @@
 script = ExtResource("1_vnat5")
 _DODGE_MAX = 3.0
 _DODGE_COST = 3.0
-_REGEN_DODGE = 0.75
 metadata/_custom_type_script = "uid://voislg2nlw1r"

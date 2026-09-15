@@ -4,7 +4,8 @@
 [ext_resource type="Resource" uid="uid://73fxw6pj8fnc" path="res://Script/Unit_STATs/P1_stats.tres" id="2_d5x1h"]
 [ext_resource type="Script" uid="uid://lmtheqghinio" path="res://Script/p_2.gd" id="2_gyfs4"]
 [ext_resource type="Script" uid="uid://doj13ka3wtnq4" path="res://Script/turn.gd" id="2_turn"]
-[ext_resource type="Resource" path="res://Script/Unit_STATs/P2_stats.tres" id="3_p2stats"]
+[ext_resource type="Resource" uid="uid://csujsv4ijd551" path="res://Script/Unit_STATs/P2_stats.tres" id="3_p2stats"]
+[ext_resource type="Script" uid="uid://db44cdwi3wlcp" path="res://global_stats.gd" id="6_hq1ik"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_14and"]
 
@@ -80,6 +81,13 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_turn")
+lane_count = null
+lane_margin = null
+lane_height = null
+lane_area_top_ratio = null
+lane_area_bottom_ratio = null
+player_unit_path = null
+enemy_unit_path = null
 
 [node name="Lane0" type="ColorRect" parent="CombatHUD/Root" unique_id=2001000006]
 layout_mode = 0
@@ -236,3 +244,6 @@ offset_right = 1090.144
 offset_bottom = 483.0
 fill_mode = 1
 show_percentage = false
+
+[node name="Global_stats" type="Node3D" parent="." unique_id=668874312]
+script = ExtResource("6_hq1ik")
