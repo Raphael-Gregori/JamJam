@@ -18,3 +18,7 @@ mono_crash.*.json
 
 #misc
 CLAUDE.md
+
+# Exported builds
+jamjam_godot_project/Export_JAMJAM/
+.vscode/settings.json
