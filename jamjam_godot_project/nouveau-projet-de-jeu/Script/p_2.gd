@@ -2,7 +2,8 @@ extends MeshInstance3D
 
 @export var _STATS: UnitStats
 
-### Runtime charge pools - start/regen/max/cost all come from _STATS; these
+### Runtime charge pools - start comes from _STATS; regen/max are ticked by
+### turn.gd's _process (Global baseline + this unit's _STATS bonus). These
 ### are the only per-instance mutable values, so they stay on the node
 ### instead of the (potentially shared) UnitStats resource.
 @export var _CURRENT_HP = 15
@@ -13,12 +14,6 @@ extends MeshInstance3D
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	_CURRENT_HP = minf(_STATS._START_HP, _STATS._HP_MAX)
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	_CURRENT_ATK = min(_CURRENT_ATK + _STATS._REGEN_ATK * delta, _STATS._ATK_MAX)
-	_CURRENT_DODGE = min(_CURRENT_DODGE + _STATS._REGEN_DODGE * delta, _STATS._DODGE_MAX)
 
 
 func _take_damage(damage: float):

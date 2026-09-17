@@ -91,16 +91,65 @@ func _ready() -> void:
 	enemy_hp_bar.max_value = enemy_unit._STATS._HP_MAX
 	player_hp_bar.value = player_unit._CURRENT_HP
 	enemy_hp_bar.value = enemy_unit._CURRENT_HP
-	player_atk_bar.max_value = player_unit._STATS._ATK_MAX
-	enemy_atk_bar.max_value = enemy_unit._STATS._ATK_MAX
+	player_atk_bar.max_value = _atk_max(player_unit)
+	enemy_atk_bar.max_value = _atk_max(enemy_unit)
 	player_atk_bar.value = player_unit._CURRENT_ATK
 	enemy_atk_bar.value = enemy_unit._CURRENT_ATK
-	player_dodge_bar.max_value = player_unit._STATS._DODGE_MAX
-	enemy_dodge_bar.max_value = enemy_unit._STATS._DODGE_MAX
+	player_dodge_bar.max_value = _dodge_max(player_unit)
+	enemy_dodge_bar.max_value = _dodge_max(enemy_unit)
 	player_dodge_bar.value = player_unit._CURRENT_DODGE
 	enemy_dodge_bar.value = enemy_unit._CURRENT_DODGE
 	result_label.visible = false
 	enemy_lane_selector.visible = enemy_human_controlled
+
+
+# --- Helpers: per-unit "final" stat values ---------------------------------
+# One helper per _STATS value read anywhere in this file. Where a matching
+# global_stats constant exists, the final value is global_stats's shared baseline + the
+# unit's own _STATS bonus (tune both players at once via global_stats, or one
+# unit's standout trait via its _STATS resource); otherwise it just exposes
+# the raw _STATS value under a consistent name. _atk_max/_atk_regen/
+# _dodge_max/_dodge_regen are already wired into _ready()/_process() - the
+# rest are not wired into any call site yet.
+func _hp_max(unit: MeshInstance3D) -> float:
+	return unit._STATS._HP_MAX
+
+func _start_hp(unit: MeshInstance3D) -> float:
+	return unit._STATS._START_HP
+
+func _damage(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_DAMAGE + unit._STATS._FORCE
+
+func _speed(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_SPEED_ACTIONS + unit._STATS._SPEED
+
+func _atk_max(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_PA_GAUGE + unit._STATS._ATK_MAX
+
+func _atk_regen(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_PA_REGEN + unit._STATS._REGEN_ATK
+
+func _fast_cost(unit: MeshInstance3D) -> float:
+	return unit._STATS._FAST_COST
+
+func _parry_cost(unit: MeshInstance3D) -> float:
+	return unit._STATS._PARRY_COST
+
+func _agility(unit: MeshInstance3D) -> float:
+	return unit._STATS._AGILITY
+
+func _dodge_range(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_DODGE_RANGE + unit._STATS._DODGE_RANGE
+
+func _dodge_max(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_DODGE_RANGE_GAUGE + unit._STATS._DODGE_MAX
+
+func _dodge_regen(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_DODGE_BASE_REGEN + unit._STATS._REGEN_DODGE
+
+func _dodge_cost(unit: MeshInstance3D) -> float:
+	return unit._STATS._DODGE_COST
+
 
 # Lay out the 3 lanes and the two edge thresholds from the current viewport size,
 # then push those positions/sizes onto the actual lane/hitbox nodes.
@@ -279,6 +328,12 @@ func _process(delta: float) -> void:
 		_update_actions(delta)
 		player_flash_t = max(player_flash_t - delta, 0.0)
 		enemy_flash_t = max(enemy_flash_t - delta, 0.0)
+	# Regen ticks here (global_stats base + unit _STATS) instead of in p_1.gd/p_2.gd's
+	# own _process, so global_stats stays the single place to rebalance both units.
+	player_unit._CURRENT_ATK = min(player_unit._CURRENT_ATK + _atk_regen(player_unit) * delta, _atk_max(player_unit))
+	enemy_unit._CURRENT_ATK = min(enemy_unit._CURRENT_ATK + _atk_regen(enemy_unit) * delta, _atk_max(enemy_unit))
+	player_unit._CURRENT_DODGE = min(player_unit._CURRENT_DODGE + _dodge_regen(player_unit) * delta, _dodge_max(player_unit))
+	enemy_unit._CURRENT_DODGE = min(enemy_unit._CURRENT_DODGE + _dodge_regen(enemy_unit) * delta, _dodge_max(enemy_unit))
 	player_atk_bar.value = player_unit._CURRENT_ATK
 	enemy_atk_bar.value = enemy_unit._CURRENT_ATK
 	player_dodge_bar.value = player_unit._CURRENT_DODGE
