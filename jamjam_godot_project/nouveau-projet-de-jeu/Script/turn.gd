@@ -87,8 +87,8 @@ func _ready() -> void:
 	
 	# p_1.gd/p_2.gd already reset _CURRENT_HP to _HP_MAX in their own _ready();
 	# P1/P2 are earlier siblings of CombatHUD so theirs has already run by now.
-	player_hp_bar.max_value = player_unit._STATS._HP_MAX
-	enemy_hp_bar.max_value = enemy_unit._STATS._HP_MAX
+	player_hp_bar.max_value = _hp_max(player_unit)
+	enemy_hp_bar.max_value = _hp_max(enemy_unit)
 	player_hp_bar.value = player_unit._CURRENT_HP
 	enemy_hp_bar.value = enemy_unit._CURRENT_HP
 	player_atk_bar.max_value = _atk_max(player_unit)
@@ -102,23 +102,24 @@ func _ready() -> void:
 	result_label.visible = false
 	enemy_lane_selector.visible = enemy_human_controlled
 
-
 # --- Helpers: per-unit "final" stat values ---------------------------------
 # One helper per _STATS value read anywhere in this file. Where a matching
 # global_stats constant exists, the final value is global_stats's shared baseline + the
 # unit's own _STATS bonus (tune both players at once via global_stats, or one
 # unit's standout trait via its _STATS resource); otherwise it just exposes
-# the raw _STATS value under a consistent name. _atk_max/_atk_regen/
-# _dodge_max/_dodge_regen are already wired into _ready()/_process() - the
-# rest are not wired into any call site yet.
+# the raw _STATS value under a consistent name. Every call site in this file
+# reads its stat through one of these instead of touching unit._STATS directly.
 func _hp_max(unit: MeshInstance3D) -> float:
-	return unit._STATS._HP_MAX
+	return unit._STATS._HP_MAX + global_stats._CONST_BASE_HP
 
 func _start_hp(unit: MeshInstance3D) -> float:
-	return unit._STATS._START_HP
+	return unit._STATS._START_HP + global_stats._CONST_BASE_HP
 
 func _damage(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_DAMAGE + unit._STATS._FORCE
+	return global_stats._CONST_DAMAGE +((unit._STATS._FORCE - 1) * global_stats._CONST_BASE_MOD_DAMAGE)
+
+func _defense_zone(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_DEFENSE_ZONE + ((unit._STATS._FORCE - 1) * global_stats._CONST_BASE_MOD_DEF_RANGE)
 
 func _speed(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_SPEED_ACTIONS + unit._STATS._SPEED
@@ -139,13 +140,13 @@ func _agility(unit: MeshInstance3D) -> float:
 	return unit._STATS._AGILITY
 
 func _dodge_range(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_DODGE_RANGE + unit._STATS._DODGE_RANGE
+	return global_stats._CONST_DODGE_RANGE + ((unit._STATS._AGILITY - 1) * global_stats._CONST_BASE_MOD_DODGE_RANGE)
 
 func _dodge_max(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_DODGE_RANGE_GAUGE + unit._STATS._DODGE_MAX
+	return global_stats._CONST_DODGE_MAX_GAUGE + ((unit._STATS._AGILITY - 1) * global_stats._CONST_BASE_MOD_DODGE_MAX_GAUGE)
 
 func _dodge_regen(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_DODGE_BASE_REGEN + unit._STATS._REGEN_DODGE
+	return global_stats._CONST_DODGE_BASE_REGEN + ((unit._STATS._AGILITY - 1) * global_stats._CONST_BASE_MOD_DODGE_REGEN)
 
 func _dodge_cost(unit: MeshInstance3D) -> float:
 	return unit._STATS._DODGE_COST
@@ -176,10 +177,10 @@ func _init_layout() -> void:
 	# gets nullified. Sized from the player's own stat block (editable on the
 	# P1 node's Inspector) rather than a fixed value here.
 	dodge_zone.position = Vector2(left_edge_x, edge_top)
-	dodge_zone.size = Vector2(player_unit._STATS._DODGE_RANGE, edge_bottom - edge_top)
-	# Mirrors dodge_zone for the enemy side, from enemy_unit._STATS._DODGE_RANGE.
-	enemy_dodge_zone.position = Vector2(right_edge_x - enemy_unit._STATS._DODGE_RANGE, edge_top)
-	enemy_dodge_zone.size = Vector2(enemy_unit._STATS._DODGE_RANGE, edge_bottom - edge_top)
+	dodge_zone.size = Vector2(_dodge_range(player_unit), edge_bottom - edge_top)
+	# Mirrors dodge_zone for the enemy side, from _dodge_range(enemy_unit).
+	enemy_dodge_zone.position = Vector2(right_edge_x - _dodge_range(enemy_unit), edge_top)
+	enemy_dodge_zone.size = Vector2(_dodge_range(enemy_unit), edge_bottom - edge_top)
 	player_hitbox.position = Vector2(left_edge_x - 4.0, edge_top)
 	player_hitbox.size = Vector2(6.0, edge_bottom - edge_top)
 	enemy_hitbox.position = Vector2(right_edge_x - 2.0, edge_top)
@@ -208,30 +209,30 @@ func _unhandled_input(event: InputEvent) -> void:
 		enemy_lane_selector.visible = enemy_human_controlled
 		return
 	if event.is_action_pressed("combat_action_fast"):
-		if player_unit._is_atk_ready(player_unit._STATS._FAST_COST):
-			player_unit._consume_atk(player_unit._STATS._FAST_COST)
+		if player_unit._is_atk_ready(_fast_cost(player_unit)):
+			player_unit._consume_atk(_fast_cost(player_unit))
 			_spawn_action(selected_lane, "player", "fast")
 	elif event.is_action_pressed("combat_parry"):
-		if player_unit._is_atk_ready(player_unit._STATS._PARRY_COST):
-			player_unit._consume_atk(player_unit._STATS._PARRY_COST)
+		if player_unit._is_atk_ready(_parry_cost(player_unit)):
+			player_unit._consume_atk(_parry_cost(player_unit))
 			_spawn_action(selected_lane, "player", "defense")
 	elif event.is_action_pressed("combat_dodge"):
-		if player_unit._is_dodge_ready(player_unit._STATS._DODGE_COST):
-			player_unit._consume_dodge(player_unit._STATS._DODGE_COST)
+		if player_unit._is_dodge_ready(_dodge_cost(player_unit)):
+			player_unit._consume_dodge(_dodge_cost(player_unit))
 			_resolve_dodge()
 	elif not enemy_human_controlled:
 		return
 	elif event.is_action_pressed("P2_combat_action_fast"):
-		if enemy_unit._is_atk_ready(enemy_unit._STATS._FAST_COST):
-			enemy_unit._consume_atk(enemy_unit._STATS._FAST_COST)
+		if enemy_unit._is_atk_ready(_fast_cost(enemy_unit)):
+			enemy_unit._consume_atk(_fast_cost(enemy_unit))
 			_spawn_action(enemy_selected_lane, "enemy", "fast")
 	elif event.is_action_pressed("P2_combat_parry"):
-		if enemy_unit._is_atk_ready(enemy_unit._STATS._PARRY_COST):
-			enemy_unit._consume_atk(enemy_unit._STATS._PARRY_COST)
+		if enemy_unit._is_atk_ready(_parry_cost(enemy_unit)):
+			enemy_unit._consume_atk(_parry_cost(enemy_unit))
 			_spawn_action(enemy_selected_lane, "enemy", "defense")
 	elif event.is_action_pressed("P2_combat_dodge"):
-		if enemy_unit._is_dodge_ready(enemy_unit._STATS._DODGE_COST):
-			enemy_unit._consume_dodge(enemy_unit._STATS._DODGE_COST)
+		if enemy_unit._is_dodge_ready(_dodge_cost(enemy_unit)):
+			enemy_unit._consume_dodge(_dodge_cost(enemy_unit))
 			_resolve_enemy_dodge()
 
 
@@ -304,8 +305,8 @@ func _spawn_action(lane: int, side: String, type_key: String) -> void:
 		"side": side,
 		"type_key": type_key,
 		"type": type,
-		"speed": unit._STATS._SPEED,
-		"damage": unit._STATS._FORCE,
+		"speed": _speed(unit),
+		"damage": _damage(unit),
 		"x": left_edge_x if side == "player" else right_edge_x,
 		"target_x": target_x,
 		"node": node,
@@ -352,7 +353,7 @@ func _update_enemy_spawner(_delta: float) -> void:
 	if enemy_human_controlled:
 		return
 	var type_key: String = ["fast", "defense"][randi() % 2]
-	var cost: float = enemy_unit._STATS._FAST_COST if type_key == "fast" else enemy_unit._STATS._PARRY_COST
+	var cost: float = _fast_cost(enemy_unit) if type_key == "fast" else _parry_cost(enemy_unit)
 	if not enemy_unit._is_atk_ready(cost):
 		return
 	enemy_unit._consume_atk(cost)
@@ -432,7 +433,7 @@ func _resolve_dodge() -> void:
 	var i := actions.size() - 1
 	while i >= 0:
 		var dict_actions: Dictionary = actions[i]
-		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= player_unit._STATS._DODGE_RANGE:
+		if dict_actions["side"] == "enemy" and dict_actions["x"] - left_edge_x <= _dodge_range(player_unit):
 			dict_actions["node"].queue_free()
 			actions.remove_at(i)
 		i -= 1
@@ -444,7 +445,7 @@ func _resolve_enemy_dodge() -> void:
 	var i := actions.size() - 1
 	while i >= 0:
 		var dict_actions: Dictionary = actions[i]
-		if dict_actions["side"] == "player" and right_edge_x - dict_actions["x"] <= enemy_unit._STATS._DODGE_RANGE:
+		if dict_actions["side"] == "player" and right_edge_x - dict_actions["x"] <= _dodge_range(enemy_unit):
 			dict_actions["node"].queue_free()
 			actions.remove_at(i)
 		i -= 1
@@ -455,7 +456,7 @@ func _resolve_enemy_dodge() -> void:
 # vice versa. HP bars read back from the unit after damage so they never
 # drift from the stat block that actually owns the value.
 func _resolve_hit(dict_stats: Dictionary) -> void:
-	var damage: int = dict_stats["damage"]
+	var damage: float = dict_stats["damage"]
 	if dict_stats["side"] == "player":
 		enemy_unit._take_damage(damage)
 		enemy_hp_bar.value = enemy_unit._CURRENT_HP
@@ -488,8 +489,8 @@ func _debug_print_stats() -> void:
 func _debug_print_unit_stats(label: String, unit: MeshInstance3D, header_hex: String) -> void:
 	print_rich("[b][color=#%s]── %s stats ──[/color][/b]" % [header_hex, label])
 	print_rich("  [color=lime][b]HP[/b][/color]    HP_MAX=%s  START_HP=%s" \
-		% [unit._STATS._HP_MAX, unit._STATS._START_HP])
-	print_rich("  [color=yellow][b]ATK[/b][/color]   FORCE=%s  SPEED=%s  REGEN_ATK=%s  ATK_MAX=%s  FAST_COST=%s  PARRY_COST=%s" \
-		% [unit._STATS._FORCE, unit._STATS._SPEED, unit._STATS._REGEN_ATK, unit._STATS._ATK_MAX, unit._STATS._FAST_COST, unit._STATS._PARRY_COST])
+		% [_hp_max(unit), _start_hp(unit)])
+	print_rich("  [color=yellow][b]ATK[/b][/color]   DMG=%s DEF_ZONE=%s SPEED=%s  REGEN_ATK=%s  ATK_MAX=%s  FAST_COST=%s  PARRY_COST=%s" \
+		% [_damage(unit), _defense_zone(unit),_speed(unit), _atk_regen(unit), _atk_max(unit), _fast_cost(unit), _parry_cost(unit)])
 	print_rich("  [color=aqua][b]DODGE[/b][/color] AGILITY=%s  REGEN_DODGE=%s  DODGE_MAX=%s  DODGE_RANGE=%s  DODGE_COST=%s" \
-		% [unit._STATS._AGILITY, unit._STATS._REGEN_DODGE, unit._STATS._DODGE_MAX, unit._STATS._DODGE_RANGE, unit._STATS._DODGE_COST])
+		% [_agility(unit), _dodge_regen(unit), _dodge_max(unit), _dodge_range(unit), _dodge_cost(unit)])

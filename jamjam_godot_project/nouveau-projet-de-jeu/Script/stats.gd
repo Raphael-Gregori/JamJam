@@ -4,6 +4,7 @@ class_name UnitStats
 ## Force
 ##Force that will be used to damage
 @export var _FORCE = 1
+@export var _defense_range = 0.05
 ## Agility of the unit.
 @export var _AGILITY = 1
 ## Speed of the unit.
