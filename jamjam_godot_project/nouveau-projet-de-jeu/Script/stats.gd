@@ -14,7 +14,7 @@ class_name UnitStats
 ## HP of the player.
 @export var _HP_MAX = 15
 @export var _REGEN_ATK = 0.5
-@export var _START_HP = 15
+var _START_HP
 
 ## Dodge charge: regenerates at _REGEN_DODGE units/sec, dodge fires (and
 ## consumes the charge) once it reaches _DODGE_COST.

@@ -6,5 +6,4 @@
 script = ExtResource("1_vnat5")
 _HP_MAX = 0
 _REGEN_ATK = 0.245
-_START_HP = 0
 metadata/_custom_type_script = "uid://voislg2nlw1r"

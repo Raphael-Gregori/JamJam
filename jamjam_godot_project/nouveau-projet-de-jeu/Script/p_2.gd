@@ -6,14 +6,14 @@ extends MeshInstance3D
 ### turn.gd's _process (Global baseline + this unit's _STATS bonus). These
 ### are the only per-instance mutable values, so they stay on the node
 ### instead of the (potentially shared) UnitStats resource.
-@export var _CURRENT_HP = 15
+@onready var _CURRENT_HP 
 @export var _CURRENT_ATK = 0.0
 @export var _CURRENT_DODGE = 0.0
 
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	_CURRENT_HP = minf(_STATS._START_HP, _STATS._HP_MAX)
+	_CURRENT_HP = _STATS._START_HP
 
 
 func _take_damage(damage: float):

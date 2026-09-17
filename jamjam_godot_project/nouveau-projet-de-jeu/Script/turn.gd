@@ -81,7 +81,6 @@ var enemy_flash_t := 0.0
 func _ready() -> void:
 	player_unit = get_node(player_unit_path)
 	enemy_unit = get_node(enemy_unit_path)
-	_debug_print_stats()
 
 	_init_layout()
 	
@@ -89,6 +88,8 @@ func _ready() -> void:
 	# P1/P2 are earlier siblings of CombatHUD so theirs has already run by now.
 	player_hp_bar.max_value = _hp_max(player_unit)
 	enemy_hp_bar.max_value = _hp_max(enemy_unit)
+	player_unit._CURRENT_HP = _hp_max(player_unit)
+	enemy_unit._CURRENT_HP = _hp_max(enemy_unit)
 	player_hp_bar.value = player_unit._CURRENT_HP
 	enemy_hp_bar.value = enemy_unit._CURRENT_HP
 	player_atk_bar.max_value = _atk_max(player_unit)
@@ -102,6 +103,8 @@ func _ready() -> void:
 	result_label.visible = false
 	enemy_lane_selector.visible = enemy_human_controlled
 
+
+	_debug_print_stats()
 # --- Helpers: per-unit "final" stat values ---------------------------------
 # One helper per _STATS value read anywhere in this file. Where a matching
 # global_stats constant exists, the final value is global_stats's shared baseline + the
@@ -113,7 +116,7 @@ func _hp_max(unit: MeshInstance3D) -> float:
 	return unit._STATS._HP_MAX + global_stats._CONST_BASE_HP
 
 func _start_hp(unit: MeshInstance3D) -> float:
-	return unit._STATS._START_HP + global_stats._CONST_BASE_HP
+	return _hp_max(unit)
 
 func _damage(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_DAMAGE +((unit._STATS._FORCE - 1) * global_stats._CONST_BASE_MOD_DAMAGE)
@@ -488,8 +491,8 @@ func _debug_print_stats() -> void:
 
 func _debug_print_unit_stats(label: String, unit: MeshInstance3D, header_hex: String) -> void:
 	print_rich("[b][color=#%s]── %s stats ──[/color][/b]" % [header_hex, label])
-	print_rich("  [color=lime][b]HP[/b][/color]    HP_MAX=%s  START_HP=%s" \
-		% [_hp_max(unit), _start_hp(unit)])
+	print_rich("  [color=lime][b]HP[/b][/color]    HP_MAX=%s  START_HP=%s CURRENT_HP=%s" \
+		% [_hp_max(unit), _start_hp(unit), unit._CURRENT_HP])
 	print_rich("  [color=yellow][b]ATK[/b][/color]   DMG=%s DEF_ZONE=%s SPEED=%s  REGEN_ATK=%s  ATK_MAX=%s  FAST_COST=%s  PARRY_COST=%s" \
 		% [_damage(unit), _defense_zone(unit),_speed(unit), _atk_regen(unit), _atk_max(unit), _fast_cost(unit), _parry_cost(unit)])
 	print_rich("  [color=aqua][b]DODGE[/b][/color] AGILITY=%s  REGEN_DODGE=%s  DODGE_MAX=%s  DODGE_RANGE=%s  DODGE_COST=%s" \
