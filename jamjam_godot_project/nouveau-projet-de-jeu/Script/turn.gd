@@ -157,6 +157,10 @@ func _dodge_regen(unit: MeshInstance3D) -> float:
 func _dodge_cost(unit: MeshInstance3D) -> float:
 	return unit._STATS._DODGE_COST
 
+## TODO : add a value that change the defense zone placement limit
+# func _defense_zone(unit: MeshInstance3D) -> float:
+# 	return global_stats._CONST_DEFENSE_ZONE + (())unit._STATS._DEFENSE_MAX
+
 
 # Lay out the 3 lanes and the two edge thresholds from the current viewport size,
 # then push those positions/sizes onto the actual lane/hitbox nodes.
