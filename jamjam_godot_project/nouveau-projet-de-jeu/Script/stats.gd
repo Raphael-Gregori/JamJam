@@ -20,11 +20,9 @@ class_name UnitStats
 @export var _PA_REGEN = 0.05
 var _START_HP
 
-## Dodge charge: regenerates at _REGEN_DODGE units/sec, dodge fires (and
-## consumes the charge) once it reaches _DODGE_COST.
+## FIXME : verify the linking of this variable
 @export var _DODGE_MAX = 1.0
-## How much of the dodge charge a dodge consumes. Defaults to _DODGE_MAX so
-## behavior is unchanged (must be full to fire) until tuned in the Inspector.
+## TODO : debug this 
 @export var _DODGE_COST = 1.0
 
 ## How close (in px) an enemy action must be to this unit's hitbox for a
