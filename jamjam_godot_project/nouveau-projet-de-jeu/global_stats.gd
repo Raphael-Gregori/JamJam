@@ -9,7 +9,6 @@ class_name Global_stats
 @export var _CONST_BASE_MOD_DEF_RANGE = 0.05
 
 
-@export var _CONST_BASE_SPEED = 1
 @export var _CONST_BASE_AGIL = 1
 
 
@@ -19,6 +18,7 @@ class_name Global_stats
 
 @export var _CONST_PA_REGEN = 1.0
 
+## in pixel/sec
 @export var _CONST_SPEED_ACTIONS = 400
 
 ## UNITÉ en pixels

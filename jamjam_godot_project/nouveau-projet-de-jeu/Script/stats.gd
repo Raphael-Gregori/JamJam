@@ -8,12 +8,16 @@ class_name UnitStats
 ## Agility of the unit.
 @export var _AGILITY = 1
 ## Speed of the unit.
-## it change the regen of the dodge regeneration
-@export var _SPEED = 350
+## it influences the regen of the PA gauge, the PA gauge MAX
+## and the speed of your actions on the line
+@export var _SPEED = 1
+## Actions Speed of the unit.
+## it affects directly the speed of the action on the line
+@export var _SPEED_OF_ACTIONS = 20
 
 ## HP of the player.
 @export var _HP_MAX = 15
-@export var _REGEN_ATK = 0.5
+@export var _PA_REGEN = 0.05
 var _START_HP
 
 ## Dodge charge: regenerates at _REGEN_DODGE units/sec, dodge fires (and
@@ -29,11 +33,10 @@ var _START_HP
 
 
 
-## ATK charge
-## regenerates at _REGEN_ATK units/sec, attack fires (and consumes the charge) once it reaches its own action cost.
-@export var _ATK_MAX = 1.0
 
-### Per-action ATK costs. Defaults to _ATK_MAX so behavior is unchanged
+@export var _PA_MAX = 0.2
+
+### Per-action ATK costs. Defaults to _PA_MAX so behavior is unchanged
 ## :(must be full to fire, fully consumed) until tuned in the Inspector -
 ## a cheaper action can then fire before the bar is completely full and
 ## leaves the remainder banked instead of resetting to 0.

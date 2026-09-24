@@ -92,8 +92,8 @@ func _ready() -> void:
 	enemy_unit._CURRENT_HP = _hp_max(enemy_unit)
 	player_hp_bar.value = player_unit._CURRENT_HP
 	enemy_hp_bar.value = enemy_unit._CURRENT_HP
-	player_atk_bar.max_value = _atk_max(player_unit)
-	enemy_atk_bar.max_value = _atk_max(enemy_unit)
+	player_atk_bar.max_value = _pa_max(player_unit)
+	enemy_atk_bar.max_value = _pa_max(enemy_unit)
 	player_atk_bar.value = player_unit._CURRENT_ATK
 	enemy_atk_bar.value = enemy_unit._CURRENT_ATK
 	player_dodge_bar.max_value = _dodge_max(player_unit)
@@ -125,13 +125,16 @@ func _defense_zone(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_DEFENSE_ZONE + ((unit._STATS._FORCE - 1) * global_stats._CONST_BASE_MOD_DEF_RANGE)
 
 func _speed(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_SPEED_ACTIONS + unit._STATS._SPEED
+	return unit._STATS._SPEED
 
-func _atk_max(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_PA_GAUGE + unit._STATS._ATK_MAX
+func _actions_speed(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_SPEED_ACTIONS + ((_speed(unit) -1) * unit._STATS._SPEED_OF_ACTIONS)
 
-func _atk_regen(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_PA_REGEN + unit._STATS._REGEN_ATK
+func _pa_max(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_PA_GAUGE + ((unit._STATS._SPEED - 1) * unit._STATS._PA_MAX)
+
+func _pa_regen(unit: MeshInstance3D) -> float:
+	return global_stats._CONST_PA_REGEN + ((unit._STATS._SPEED - 1) * unit._STATS._PA_REGEN)
 
 func _fast_cost(unit: MeshInstance3D) -> float:
 	return unit._STATS._FAST_COST
@@ -308,7 +311,7 @@ func _spawn_action(lane: int, side: String, type_key: String) -> void:
 		"side": side,
 		"type_key": type_key,
 		"type": type,
-		"speed": _speed(unit),
+		"speed": _actions_speed(unit),
 		"damage": _damage(unit),
 		"x": left_edge_x if side == "player" else right_edge_x,
 		"target_x": target_x,
@@ -334,8 +337,8 @@ func _process(delta: float) -> void:
 		enemy_flash_t = max(enemy_flash_t - delta, 0.0)
 	# Regen ticks here (global_stats base + unit _STATS) instead of in p_1.gd/p_2.gd's
 	# own _process, so global_stats stays the single place to rebalance both units.
-	player_unit._CURRENT_ATK = min(player_unit._CURRENT_ATK + _atk_regen(player_unit) * delta, _atk_max(player_unit))
-	enemy_unit._CURRENT_ATK = min(enemy_unit._CURRENT_ATK + _atk_regen(enemy_unit) * delta, _atk_max(enemy_unit))
+	player_unit._CURRENT_ATK = min(player_unit._CURRENT_ATK + _pa_regen(player_unit) * delta, _pa_max(player_unit))
+	enemy_unit._CURRENT_ATK = min(enemy_unit._CURRENT_ATK + _pa_regen(enemy_unit) * delta, _pa_max(enemy_unit))
 	player_unit._CURRENT_DODGE = min(player_unit._CURRENT_DODGE + _dodge_regen(player_unit) * delta, _dodge_max(player_unit))
 	enemy_unit._CURRENT_DODGE = min(enemy_unit._CURRENT_DODGE + _dodge_regen(enemy_unit) * delta, _dodge_max(enemy_unit))
 	player_atk_bar.value = player_unit._CURRENT_ATK
@@ -493,7 +496,7 @@ func _debug_print_unit_stats(label: String, unit: MeshInstance3D, header_hex: St
 	print_rich("[b][color=#%s]── %s stats ──[/color][/b]" % [header_hex, label])
 	print_rich("  [color=lime][b]HP[/b][/color]    HP_MAX=%s  START_HP=%s CURRENT_HP=%s" \
 		% [_hp_max(unit), _start_hp(unit), unit._CURRENT_HP])
-	print_rich("  [color=yellow][b]ATK[/b][/color]   DMG=%s DEF_ZONE=%s SPEED=%s  REGEN_ATK=%s  ATK_MAX=%s  FAST_COST=%s  PARRY_COST=%s" \
-		% [_damage(unit), _defense_zone(unit),_speed(unit), _atk_regen(unit), _atk_max(unit), _fast_cost(unit), _parry_cost(unit)])
+	print_rich("  [color=yellow][b]ATK[/b][/color]   DMG=%s DEF_ZONE=%s SPEED=%s  REGEN_PA=%s  PA_MAX=%s  FAST_COST=%s  PARRY_COST=%s SPEED_OF_ACTIONS=%s" \
+		% [_damage(unit), _defense_zone(unit),_speed(unit), _pa_regen(unit), _pa_max(unit), _fast_cost(unit), _parry_cost(unit), _actions_speed(unit)])
 	print_rich("  [color=aqua][b]DODGE[/b][/color] AGILITY=%s  REGEN_DODGE=%s  DODGE_MAX=%s  DODGE_RANGE=%s  DODGE_COST=%s" \
 		% [_agility(unit), _dodge_regen(unit), _dodge_max(unit), _dodge_range(unit), _dodge_cost(unit)])

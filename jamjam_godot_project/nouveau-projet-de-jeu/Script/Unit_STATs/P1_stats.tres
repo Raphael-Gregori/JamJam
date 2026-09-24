@@ -6,6 +6,6 @@
 script = ExtResource("1_vnat5")
 _FORCE = 3
 _AGILITY = 3
-_HP_MAX = 0
+_SPEED = 3
 _DODGE_MAX = 3.0
 metadata/_custom_type_script = "uid://voislg2nlw1r"

@@ -20,6 +20,12 @@ albedo_color = Color(6.545782e-06, 0.69915295, 0.88087183, 1)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7jxi0"]
 albedo_color = Color(7.941574e-06, 0.75521064, 0.04102324, 1)
 
+[sub_resource type="Environment" id="Environment_pw64s"]
+
+[sub_resource type="CameraAttributesPhysical" id="CameraAttributesPhysical_wy74d"]
+
+[sub_resource type="Compositor" id="Compositor_0l0ro"]
+
 [node name="Node3D" type="Node3D" unique_id=929869374]
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=937476976]
@@ -63,6 +69,9 @@ _STATS = ExtResource("3_p2stats")
 shape = SubResource("BoxShape3D_14and")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=741576923]
+environment = SubResource("Environment_pw64s")
+camera_attributes = SubResource("CameraAttributesPhysical_wy74d")
+compositor = SubResource("Compositor_0l0ro")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment" unique_id=1996916273]
 transform = Transform3D(0.87867177, 0.35946983, -0.31419322, 0, 0.65809774, 0.7529325, 0.47742638, -0.6615805, 0.5782519, -4.76976, 1.5456545, 1.4126562)
