@@ -155,10 +155,11 @@ func _agility(unit: MeshInstance3D) -> float:
 ## TODO: the global constants should be unit stats based
 func _dodge_range(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_DODGE_RANGE + ((unit._STATS._AGILITY - 1) * global_stats._CONST_BASE_MOD_DODGE_RANGE)
-
+## TODO: same here
 func _dodge_max(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_DODGE_MAX_GAUGE + ((unit._STATS._AGILITY - 1) * global_stats._CONST_BASE_MOD_DODGE_MAX_GAUGE)
 
+## TODO: here
 func _dodge_regen(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_DODGE_BASE_REGEN + ((unit._STATS._AGILITY - 1) * global_stats._CONST_BASE_MOD_DODGE_REGEN)
 
