@@ -47,6 +47,8 @@ var enemy_unit: MeshInstance3D
 @onready var enemy_lane_selector: ColorRect = $EnemyLaneSelector
 @onready var dodge_zone: ColorRect = $DodgeZone
 @onready var enemy_dodge_zone: ColorRect = $EnemyDodgeZone
+@onready var defense_line: ColorRect = $DefenseLine
+@onready var enemy_defense_line: ColorRect = $EnemyDefenseLine
 @onready var player_hitbox: ColorRect = $PlayerHitbox
 @onready var enemy_hitbox: ColorRect = $EnemyHitbox
 @onready var actions_layer: Control = $ActionsLayer
@@ -122,7 +124,12 @@ func _damage(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_DAMAGE +((unit._STATS._FORCE - 1) * global_stats._CONST_BASE_MOD_DAMAGE)
 
 func _defense_zone(unit: MeshInstance3D) -> float:
-	return global_stats._CONST_DEFENSE_ZONE + ((unit._STATS._FORCE - 1) * global_stats._CONST_BASE_MOD_DEF_RANGE)
+	return global_stats._CONST_DEFENSE_ZONE + ((unit._STATS._FORCE - 1) * unit._STATS._defense_range)
+
+# Same reach, in pixels. Shared by _spawn_action (where a Defense stops) and
+# _init_layout (where DefenseLine/EnemyDefenseLine draw that same stop point).
+func _defense_reach_px(unit: MeshInstance3D) -> float:
+	return clampf(_defense_zone(unit), 0.0, 1.0) * (right_edge_x - left_edge_x)
 
 func _speed(unit: MeshInstance3D) -> float:
 	return unit._STATS._SPEED
@@ -145,6 +152,7 @@ func _parry_cost(unit: MeshInstance3D) -> float:
 func _agility(unit: MeshInstance3D) -> float:
 	return unit._STATS._AGILITY
 
+## TODO: the global constants should be unit stats based
 func _dodge_range(unit: MeshInstance3D) -> float:
 	return global_stats._CONST_DODGE_RANGE + ((unit._STATS._AGILITY - 1) * global_stats._CONST_BASE_MOD_DODGE_RANGE)
 
@@ -156,10 +164,6 @@ func _dodge_regen(unit: MeshInstance3D) -> float:
 
 func _dodge_cost(unit: MeshInstance3D) -> float:
 	return unit._STATS._DODGE_COST
-
-## TODO : add a value that change the defense zone placement limit
-# func _defense_zone(unit: MeshInstance3D) -> float:
-# 	return global_stats._CONST_DEFENSE_ZONE + (())unit._STATS._DEFENSE_MAX
 
 
 # Lay out the 3 lanes and the two edge thresholds from the current viewport size,
@@ -191,6 +195,13 @@ func _init_layout() -> void:
 	# Mirrors dodge_zone for the enemy side, from _dodge_range(enemy_unit).
 	enemy_dodge_zone.position = Vector2(right_edge_x - _dodge_range(enemy_unit), edge_top)
 	enemy_dodge_zone.size = Vector2(_dodge_range(enemy_unit), edge_bottom - edge_top)
+	# DefenseLine/EnemyDefenseLine mark the exact spot a Defense stops at
+	# (_defense_reach_px) - a thin bar, not a zone, since it's one stopping
+	# point rather than a range like dodge.
+	defense_line.position = Vector2(left_edge_x + _defense_reach_px(player_unit) - 1.5, edge_top)
+	defense_line.size = Vector2(3.0, edge_bottom - edge_top)
+	enemy_defense_line.position = Vector2(right_edge_x - _defense_reach_px(enemy_unit) - 1.5, edge_top)
+	enemy_defense_line.size = Vector2(3.0, edge_bottom - edge_top)
 	player_hitbox.position = Vector2(left_edge_x - 4.0, edge_top)
 	player_hitbox.size = Vector2(6.0, edge_bottom - edge_top)
 	enemy_hitbox.position = Vector2(right_edge_x - 2.0, edge_top)
@@ -306,10 +317,14 @@ func _spawn_action(lane: int, side: String, type_key: String) -> void:
 
 	# Speed/damage come from the acting unit's own stat block, not the action type.
 	var unit: MeshInstance3D = player_unit if side == "player" else enemy_unit
-	# A Defense only ever travels from its own edge to the middle of the lane
-	# (see _resolve_defenses) instead of all the way to the opposite edge.
-	var target_x: float = (left_edge_x + right_edge_x) * 0.5 if type_key == "defense" \
-		else (right_edge_x if side == "player" else left_edge_x)
+	# Defense stops at _defense_reach_px() - same reach as the DefenseLine/
+	# EnemyDefenseLine markers drawn in _init_layout, so they stay in sync.
+	var target_x: float
+	if type_key == "defense":
+		var reach: float = _defense_reach_px(unit)
+		target_x = left_edge_x + reach if side == "player" else right_edge_x - reach
+	else:
+		target_x = right_edge_x if side == "player" else left_edge_x
 	var dict_stats := {
 		"lane": lane,
 		"side": side,
@@ -372,8 +387,8 @@ func _update_enemy_spawner(_delta: float) -> void:
 
 
 # Moves every action (clamped to its own target_x - the opposite edge for a
-# Fast Strike, the lane's midpoint for a Defense) and resolves hits by
-# comparing x against that target. A Defense that reaches its target without
+# Fast Strike, its caster's _defense_zone() reach for a Defense) and resolves
+# hits by comparing x against that target. A Defense that reaches its target without
 # having intercepted anything (see _resolve_defenses) just disappears there,
 # since it isn't the one that deals damage.
 func _update_actions(delta: float) -> void:
@@ -402,7 +417,7 @@ func _update_actions(delta: float) -> void:
 
 # A Defense marker (either side can spawn one) intercepts the first
 # same-lane opposing action that has reached or passed it at any point along
-# its short trip to the midpoint, nullifying both with no damage dealt. If
+# its short trip to its _defense_zone() reach, nullifying both with no damage dealt. If
 # nothing crosses it in time, the marker itself vanishes on arrival (see
 # _update_actions) instead of lingering as a standing wall.
 func _resolve_defenses() -> void:
